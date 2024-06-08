@@ -1,6 +1,6 @@
 #include <cppystruct.hpp>
 
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 #define REQUIRE_STATIC(x)                                                      \
     REQUIRE(x);                                                                \

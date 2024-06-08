@@ -13,7 +13,7 @@
 #include <vector>
 
 #define CATCH_CONFIG_ENABLE_TUPLE_STRINGMAKER
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 template <typename T>
 std::string escapeString(const T &val) {

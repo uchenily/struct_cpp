@@ -54,3 +54,6 @@ Release/
 *.out
 *.app
 .cache
+subprojects/*
+!subprojects/packagefiles/
+!subprojects/*.wrap

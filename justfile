@@ -44,4 +44,7 @@ build-cmake-setup:
     cmake -GNinja -Bbuild -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
 format:
-    fd -e hpp -e cpp . -E ./build -x clang-format -i {}
+    fd -e hpp -e cpp . -E ./build -E ./subprojects/ -x clang-format -i {}
+
+replace XXX YYY:
+    fd -e hpp -e cpp . -E ./build -E ./subprojects/ -x sed -i 's/'$(echo {{XXX}} | sed 's/\//\\\//g')'/'$(echo {{YYY}} | sed 's/\//\\\//g')'/g' {}

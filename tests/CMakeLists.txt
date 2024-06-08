@@ -75,7 +75,7 @@ endif()
 
 # for tests to find the catch header
 target_include_directories(cppystruct_tests_config INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/external/include/catch2>
+    $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/external/include/>
 )
 
 # create the main executable for each test. this reduces the compile time

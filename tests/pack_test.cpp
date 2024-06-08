@@ -3,7 +3,7 @@
 #include "cppystruct.hpp"
 
 #define CATCH_CONFIG_ENABLE_TUPLE_STRINGMAKER
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 using namespace std::string_view_literals;
 
