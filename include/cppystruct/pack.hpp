@@ -1,8 +1,8 @@
 #pragma once
 #include <array>
 
-#include "cppystruct/calcsize.h"
-#include "cppystruct/data_view.h"
+#include "cppystruct/calcsize.hpp"
+#include "cppystruct/data_view.hpp"
 
 namespace pystruct {
 

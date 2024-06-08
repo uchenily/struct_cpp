@@ -1,4 +1,4 @@
-#include <cppystruct.h>
+#include <cppystruct.hpp>
 
 #include <catch.hpp>
 

@@ -2,7 +2,7 @@
 #include <tuple>
 #include <utility>
 
-#include "cppystruct/format.h"
+#include "cppystruct/format.hpp"
 
 namespace pystruct {
 

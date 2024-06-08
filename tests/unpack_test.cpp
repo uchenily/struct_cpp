@@ -1,6 +1,6 @@
-#include "constexpr_compare.h"
-#include "constexpr_require.h"
-#include "cppystruct.h"
+#include "constexpr_compare.hpp"
+#include "constexpr_require.hpp"
+#include "cppystruct.hpp"
 
 #include <limits>
 #include <string>

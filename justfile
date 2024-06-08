@@ -36,3 +36,9 @@ dry-run:
 # install library
 install:
     meson install -C build --no-rebuild --only-changed
+
+build-cmake:
+    cmake --build build
+
+build-cmake-setup:
+    cmake -GNinja -Bbuild -DCMAKE_EXPORT_COMPILE_COMMANDS=ON

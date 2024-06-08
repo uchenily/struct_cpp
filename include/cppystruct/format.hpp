@@ -1,5 +1,5 @@
 #pragma once
-#include "cppystruct/string.h"
+#include "cppystruct/string.hpp"
 
 #include <cstdint>
 #include <string_view>
