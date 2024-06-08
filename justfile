@@ -42,3 +42,6 @@ build-cmake:
 
 build-cmake-setup:
     cmake -GNinja -Bbuild -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+format:
+    fd -e hpp -e cpp . -E ./build -x clang-format -i {}
