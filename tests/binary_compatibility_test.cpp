@@ -2,7 +2,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <cstdio>
 
-#include "cppystruct.hpp"
+#include "struct.hpp"
 
 #include <fstream>
 #include <iomanip>
@@ -128,7 +128,7 @@ auto runPythonPack(Fmt, const Args &...toPack) {
 
 template <typename Fmt, typename... Args>
 void testPackAgainstPython(Fmt, const Args &...toPack) {
-    auto packed = pystruct::pack(Fmt{}, toPack...);
+    auto packed = struct_cpp::pack(Fmt{}, toPack...);
     auto pythonPacked = runPythonPack(Fmt{}, toPack...);
 
     CAPTURE(packed);
@@ -137,7 +137,7 @@ void testPackAgainstPython(Fmt, const Args &...toPack) {
     REQUIRE(packed.size() == pythonPacked.size());
     REQUIRE(std::equal(packed.begin(), packed.end(), pythonPacked.begin()));
 
-    auto unpacked = pystruct::unpack(Fmt{}, pythonPacked);
+    auto unpacked = struct_cpp::unpack(Fmt{}, pythonPacked);
     REQUIRE(unpacked == std::make_tuple(toPack...));
 }
 
@@ -156,7 +156,7 @@ void testPackAgainstPython(Fmt, const Args &...toPack) {
     testPackAgainstPython(NETWORK_ENDIAN_STRING(str), __VA_ARGS__);            \
     testPackAgainstPython(LITTLE_ENDIAN_STRING(str), __VA_ARGS__);
 
-TEST_CASE("integers - single items", "[cppystruct::binary_compat]") {
+TEST_CASE("integers - single items", "[cpstruct_cpp::binary_compat]") {
     TEST_PACK("?", false);
     TEST_PACK("?", true);
     TEST_PACK("c", 'a');
@@ -185,7 +185,7 @@ TEST_CASE("integers - single items", "[cppystruct::binary_compat]") {
     TEST_PACK("Q", std::numeric_limits<unsigned long long>::max());
 }
 
-TEST_CASE("strings - single items", "[cppystruct::binary_compat]") {
+TEST_CASE("strings - single items", "[cpstruct_cpp::binary_compat]") {
     std::string s = "This is a test";
     s.resize(50);
     TEST_PACK("50s", s);
@@ -197,7 +197,7 @@ TEST_CASE("strings - single items", "[cppystruct::binary_compat]") {
     TEST_PACK("5s", s);
 }
 
-TEST_CASE("floats - single items", "[cppystruct::binary_compat]") {
+TEST_CASE("floats - single items", "[cpstruct_cpp::binary_compat]") {
     TEST_PACK("f", 0);
     TEST_PACK("d", 0);
 
@@ -208,7 +208,7 @@ TEST_CASE("floats - single items", "[cppystruct::binary_compat]") {
     TEST_PACK("d", std::numeric_limits<double>::min());
 }
 
-TEST_CASE("pack complex formats", "[cppystruct::binary_compat]") {
+TEST_CASE("pack complex formats", "[cpstruct_cpp::binary_compat]") {
     TEST_PACK("2cf3s2H?", 'x', 'y', 0.5, "zwt", 0x1234, 0x5678, false);
     TEST_PACK("L2cd5si?", 0x1234UL, 'l', 'o', 3.14159, "lolzs", -500, true);
     TEST_PACK("bhi?lfq",
