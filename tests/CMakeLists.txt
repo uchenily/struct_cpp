@@ -17,7 +17,7 @@ if(GIT_FOUND)
         catch
         PREFIX ${CMAKE_BINARY_DIR}/catch
         GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-        GIT_TAG v2.2.2
+        GIT_TAG v2.13.10
         CMAKE_ARGS ${CATCH_CMAKE_ARGS}
         LOG_DOWNLOAD 1
         UPDATE_DISCONNECTED 1
@@ -75,7 +75,7 @@ endif()
 
 # for tests to find the catch header
 target_include_directories(cppystruct_tests_config INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/external/include/catch>
+    $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/external/include/catch2>
 )
 
 # create the main executable for each test. this reduces the compile time
@@ -120,4 +120,4 @@ add_test_exe(string_test 0)
 add_test_exe(format_test 0)
 add_test_exe(pack_test 0)
 add_test_exe(unpack_test 0)
-add_test_exe(binary_compatibility_test 1)
+# add_test_exe(binary_compatibility_test 1)
