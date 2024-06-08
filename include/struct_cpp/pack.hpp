@@ -1,16 +1,16 @@
 #pragma once
 #include <array>
 
-#include "cppystruct/calcsize.hpp"
-#include "cppystruct/data_view.hpp"
+#include "struct_cpp/calcsize.hpp"
+#include "struct_cpp/data_view.hpp"
 
-namespace pystruct {
+namespace struct_cpp {
 
 template <typename Fmt, typename... Args>
 constexpr auto pack(Fmt formatString, Args &&...args);
 
 // Impl
-namespace internal {
+namespace detail {
     template <typename RepType>
     constexpr int
     packElement(char *data, bool bigEndian, FormatType format, RepType elem) {
@@ -48,16 +48,16 @@ namespace internal {
         static_assert(
             sizeof...(args) == sizeof...(Items),
             "pack expected items for packing != sizeof...(args) passed");
-        constexpr auto formatMode = pystruct::getFormatMode(Fmt{});
+        constexpr auto formatMode = struct_cpp::getFormatMode(Fmt{});
 
-        using ArrayType = std::array<char, pystruct::calcsize(Fmt{})>;
+        using ArrayType = std::array<char, struct_cpp::calcsize(Fmt{})>;
         ArrayType output{};
 
         constexpr FormatType formats[]
-            = {pystruct::getTypeOfItem<Items>(Fmt{})...};
+            = {struct_cpp::getTypeOfItem<Items>(Fmt{})...};
         using Types = std::tuple<
-            typename pystruct::RepresentedType<decltype(formatMode),
-                                               formats[Items].formatChar>...>;
+            typename struct_cpp::RepresentedType<decltype(formatMode),
+                                                 formats[Items].formatChar>...>;
 
         // Convert args to a tuple of the represented types
         Types t = std::make_tuple(convert<std::tuple_element_t<Items, Types>>(
@@ -73,13 +73,13 @@ namespace internal {
 
         return output;
     }
-} // namespace internal
+} // namespace detail
 
 template <typename Fmt, typename... Args>
 constexpr auto pack(Fmt, Args &&...args) {
     constexpr size_t itemCount = countItems(Fmt{});
-    return internal::pack<Fmt>(std::make_index_sequence<itemCount>(),
-                               std::forward<Args>(args)...);
+    return detail::pack<Fmt>(std::make_index_sequence<itemCount>(),
+                             std::forward<Args>(args)...);
 }
 
-} // namespace pystruct
+} // namespace struct_cpp

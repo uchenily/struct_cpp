@@ -1,25 +1,25 @@
 #pragma once
 #include <array>
 
-#include "cppystruct/calcsize.hpp"
-#include "cppystruct/data_view.hpp"
+#include "struct_cpp/calcsize.hpp"
+#include "struct_cpp/data_view.hpp"
 
-namespace pystruct {
+namespace struct_cpp {
 
 template <typename Fmt, typename Input>
 constexpr auto unpack(Fmt, Input &&packedInput);
 
-namespace internal {
+namespace detail {
 
     template <typename Fmt, size_t... Items, typename Input>
     constexpr auto unpack(std::index_sequence<Items...>, Input &&packedInput);
 
-} // namespace internal
+} // namespace detail
 
 template <typename Fmt, typename Input>
 constexpr auto unpack(Fmt, Input &&packedInput) {
-    return internal::unpack<Fmt>(std::make_index_sequence<countItems(Fmt{})>(),
-                                 std::forward<Input>(packedInput));
+    return detail::unpack<Fmt>(std::make_index_sequence<countItems(Fmt{})>(),
+                               std::forward<Input>(packedInput));
 }
 
 template <size_t Item, typename UnpackedType>
@@ -31,15 +31,16 @@ constexpr auto unpackElement(const char *begin, size_t size, bool bigEndian) {
 }
 
 template <typename Fmt, size_t... Items, typename Input>
-constexpr auto internal::unpack(std::index_sequence<Items...>,
-                                Input &&packedInput) {
-    constexpr auto formatMode = pystruct::getFormatMode(Fmt{});
+constexpr auto detail::unpack(std::index_sequence<Items...>,
+                              Input &&packedInput) {
+    constexpr auto formatMode = struct_cpp::getFormatMode(Fmt{});
 
-    constexpr FormatType formats[] = {pystruct::getTypeOfItem<Items>(Fmt{})...};
+    constexpr FormatType formats[]
+        = {struct_cpp::getTypeOfItem<Items>(Fmt{})...};
 
     using Types = std::tuple<
-        typename pystruct::RepresentedType<decltype(formatMode),
-                                           formats[Items].formatChar>...>;
+        typename struct_cpp::RepresentedType<decltype(formatMode),
+                                             formats[Items].formatChar>...>;
 
     constexpr size_t offsets[] = {getBinaryOffset<Items>(Fmt{})...};
     auto             unpacked = std::make_tuple(
@@ -51,4 +52,4 @@ constexpr auto internal::unpack(std::index_sequence<Items...>,
     return unpacked;
 }
 
-} // namespace pystruct
+} // namespace struct_cpp

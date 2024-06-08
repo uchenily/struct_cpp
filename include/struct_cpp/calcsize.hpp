@@ -2,21 +2,17 @@
 #include <tuple>
 #include <utility>
 
-#include "cppystruct/format.hpp"
+#include "struct_cpp/format.hpp"
 
-namespace pystruct {
-
-// Interface
-template <typename Fmt>
-constexpr size_t calcsize(Fmt formatString);
+namespace struct_cpp {
 
 // Implementation
 template <typename Fmt>
-constexpr size_t calcsize(Fmt) {
+constexpr auto calcsize(Fmt /*fmt*/) -> std::size_t {
     constexpr auto numItems = countItems(Fmt{});
     constexpr auto lastItem = getTypeOfItem<numItems - 1>(Fmt{});
 
     return getBinaryOffset<numItems - 1>(Fmt{}) + lastItem.size;
 }
 
-} // namespace pystruct
+} // namespace struct_cpp

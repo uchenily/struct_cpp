@@ -1,10 +1,10 @@
 #pragma once
-#include "cppystruct/string.hpp"
+#include "struct_cpp/string.hpp"
 
 #include <cstdint>
 #include <string_view>
 
-namespace pystruct {
+namespace struct_cpp {
 
 constexpr bool isFormatMode(char formatChar) {
     return formatChar == '<' || formatChar == '>' || formatChar == '!'
@@ -18,7 +18,7 @@ constexpr bool isFormatChar(char formatChar) {
            || formatChar == 'I' || formatChar == 'l' || formatChar == 'L'
            || formatChar == 'q' || formatChar == 'Q' || formatChar == 'f'
            || formatChar == 'd' || formatChar == '?'
-           || internal::isDigit(formatChar);
+           || detail::isDigit(formatChar);
 }
 
 // Specifying the format mode
@@ -170,8 +170,8 @@ constexpr size_t countItems(Fmt) {
             continue;
         }
 
-        if (internal::isDigit(currentChar)) {
-            auto numberAndOffset = internal::consumeNumber(Fmt::value(), i);
+        if (detail::isDigit(currentChar)) {
+            auto numberAndOffset = detail::consumeNumber(Fmt::value(), i);
 
             multiplier = numberAndOffset.first;
             i = numberAndOffset.second;
@@ -226,7 +226,7 @@ constexpr RawFormatType getTypeOfItem(std::index_sequence<Is...>) {
             continue;
         }
 
-        auto repeatCount = internal::consumeNumber(fomratString, i);
+        auto repeatCount = detail::consumeNumber(fomratString, i);
         i = repeatCount.second;
 
         wrappedTypes[currentType].formatChar = fomratString[i];
@@ -260,7 +260,7 @@ template <typename Fmt, size_t... Items>
 constexpr size_t getBinaryOffset(Fmt, std::index_sequence<Items...>) {
     constexpr FormatType itemTypes[] = {getTypeOfItem<Items>(Fmt{})...};
 
-    constexpr auto formatMode = pystruct::getFormatMode(Fmt{});
+    constexpr auto formatMode = struct_cpp::getFormatMode(Fmt{});
 
     size_t size = 0;
     for (size_t i = 0; i < sizeof...(Items) - 1; i++) {
@@ -284,4 +284,4 @@ constexpr size_t getBinaryOffset(Fmt) {
     return getBinaryOffset(Fmt{}, std::make_index_sequence<Item + 1>());
 }
 
-} // namespace pystruct
+} // namespace struct_cpp

@@ -7,7 +7,7 @@
 #include <cstring>
 #include <string_view>
 
-namespace pystruct {
+namespace struct_cpp {
 
 template <typename T>
 struct data_view {
@@ -352,4 +352,4 @@ namespace data {
     }
 
 } // namespace data
-} // namespace pystruct
+} // namespace struct_cpp
