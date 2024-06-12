@@ -17,3 +17,18 @@ foreach source: all_tests_sources
   test_name = target_name.replace('_test', '')
   test(test_name, exe)
 endforeach
+
+sources_with_main = [
+  'demo.cpp',
+]
+
+foreach source: sources_with_main
+  target_name = source.replace('.cpp', '')
+  exe = executable(target_name, source,
+    include_directories: includes,
+    cpp_args: compile_args + ['-DWITH_CONSTEXPR_REQUIRE'],
+    dependencies: dependencies)
+
+  test_name = target_name.replace('_test', '')
+  test(test_name, exe)
+endforeach

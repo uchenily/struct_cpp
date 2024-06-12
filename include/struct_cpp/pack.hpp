@@ -76,7 +76,7 @@ namespace detail {
 } // namespace detail
 
 template <typename Fmt, typename... Args>
-constexpr auto pack(Fmt, Args &&...args) {
+constexpr auto pack(Fmt /*unused*/, Args &&...args) {
     constexpr size_t itemCount = countItems(Fmt{});
     return detail::pack<Fmt>(std::make_index_sequence<itemCount>(),
                              std::forward<Args>(args)...);
