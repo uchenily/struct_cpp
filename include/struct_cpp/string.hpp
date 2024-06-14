@@ -27,10 +27,10 @@ constexpr std::pair<size_t, size_t> consumeNumber(const char (&str)[Size],
 #define PY_STRING(s)                                                           \
     [] {                                                                       \
         struct S : struct_cpp::detail::format_string {                         \
-            static constexpr decltype(auto) value() {                          \
+            static constexpr auto value() -> decltype(auto) {                  \
                 return s;                                                      \
             }                                                                  \
-            static constexpr size_t size() {                                   \
+            static constexpr auto size() -> size_t {                           \
                 return std::size(value()) - 1;                                 \
             }                                                                  \
             static constexpr auto at(size_t i) {                               \
