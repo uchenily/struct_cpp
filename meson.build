@@ -11,7 +11,7 @@ compile_args = []
 
 includes = include_directories('include')
 
-catch2_dep = dependency('catch2')
+catch2_dep = dependency('catch2', version: ['>=2.13.8', '<3'])
 dependencies = []
 dependencies += catch2_dep
 
