@@ -1,12 +1,12 @@
+#include "struct_pack/debug.hpp"
 #include "struct_pack/string_literal.hpp"
 #include <tuple>
 
 namespace struct_pack {
 namespace detail {
-#if !defined(SET_FORMAT_MODE)
     // Specifying the format mode
     template <char FormatChar>
-    struct FormatMode {
+    struct new_FormatMode {
         static constexpr auto is_big_endian() -> bool {
             return false;
         }
@@ -17,12 +17,13 @@ namespace detail {
             return false;
         }
         static constexpr auto format() -> char {
-            return FormatChar;
+            return '?';
         }
     };
+#undef SET_FORMAT_MODE
 #define SET_FORMAT_MODE(mode, padding, big_endian, native)                     \
     template <>                                                                \
-    struct FormatMode<mode> {                                                  \
+    struct new_FormatMode<mode> {                                              \
         static constexpr auto is_big_endian() -> bool {                        \
             return big_endian;                                                 \
         }                                                                      \
@@ -40,7 +41,6 @@ namespace detail {
     SET_FORMAT_MODE('>', false, true, false);
     SET_FORMAT_MODE('!', false, true, false);
 #undef SET_FORMAT_MODE
-#endif
 
     template <auto container>
     struct fmt_string {
@@ -121,9 +121,9 @@ namespace detail {
         constexpr auto format_mode() {
             if constexpr (is_format_mode(at(0))) {
                 constexpr auto first_char = at(0);
-                return FormatMode<first_char>{};
+                return new_FormatMode<first_char>{};
             } else {
-                return FormatMode<'@'>{};
+                return new_FormatMode<'@'>{};
             }
         }
     };
@@ -147,7 +147,7 @@ auto new_pack(Args... args) {
     static_assert(N == sizeof...(args));
 
     constexpr auto format_mode = fmt.format_mode();
-    // PRINT("format mode: {}", format_mode.format());
+    PRINT("format mode: {}", format_mode.format());
     detail::pack_helper<container, 0, N>(std::forward<Args>(args)...);
 
     return fmt;
