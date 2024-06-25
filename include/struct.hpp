@@ -5,5 +5,6 @@
 
 #include "struct_cpp/calcsize.hpp"
 #include "struct_cpp/format.hpp"
+#include "struct_cpp/new_pack.hpp"
 #include "struct_cpp/pack.hpp"
 #include "struct_cpp/unpack.hpp"

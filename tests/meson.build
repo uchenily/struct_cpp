@@ -21,6 +21,7 @@ endforeach
 sources_with_main = [
   'demo.cpp',
   'string_literal_test.cpp',
+  'newpack_test.cpp',
 ]
 
 foreach source: sources_with_main
