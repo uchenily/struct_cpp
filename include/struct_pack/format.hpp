@@ -1,10 +1,10 @@
 #pragma once
-#include "struct_cpp/string.hpp"
+#include "struct_pack/string.hpp"
 
 #include <cstdint>
 #include <string_view>
 
-namespace struct_cpp {
+namespace struct_pack {
 
 constexpr bool isFormatMode(char formatChar) {
     return formatChar == '<' || formatChar == '>' || formatChar == '!'
@@ -260,7 +260,7 @@ template <typename Fmt, size_t... Items>
 constexpr size_t getBinaryOffset(Fmt, std::index_sequence<Items...>) {
     constexpr FormatType itemTypes[] = {getTypeOfItem<Items>(Fmt{})...};
 
-    constexpr auto formatMode = struct_cpp::getFormatMode(Fmt{});
+    constexpr auto formatMode = struct_pack::getFormatMode(Fmt{});
 
     size_t size = 0;
     for (size_t i = 0; i < sizeof...(Items) - 1; i++) {
@@ -284,4 +284,4 @@ constexpr size_t getBinaryOffset(Fmt) {
     return getBinaryOffset(Fmt{}, std::make_index_sequence<Item + 1>());
 }
 
-} // namespace struct_cpp
+} // namespace struct_pack

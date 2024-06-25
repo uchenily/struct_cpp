@@ -1,4 +1,4 @@
-#include "struct_cpp/string_literal.hpp"
+#include "struct_pack/string_literal.hpp"
 #include <tuple>
 
 template <auto container>
@@ -65,7 +65,7 @@ struct fmt_string {
     }
 };
 
-namespace struct_cpp {
+namespace struct_pack {
 template <string_container container, typename... Args>
 auto new_pack(Args... args) {
     auto fmt = fmt_string<container>{};
@@ -75,4 +75,4 @@ auto new_pack(Args... args) {
 
     return fmt;
 }
-} // namespace struct_cpp
+} // namespace struct_pack

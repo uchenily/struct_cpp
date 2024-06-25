@@ -1,10 +1,10 @@
 #pragma once
 #include <array>
 
-#include "struct_cpp/calcsize.hpp"
-#include "struct_cpp/data_view.hpp"
+#include "struct_pack/calcsize.hpp"
+#include "struct_pack/data_view.hpp"
 
-namespace struct_cpp {
+namespace struct_pack {
 
 template <typename Fmt, typename Input>
 constexpr auto unpack(Fmt, Input &&packedInput);
@@ -33,14 +33,14 @@ constexpr auto unpackElement(const char *begin, size_t size, bool bigEndian) {
 template <typename Fmt, size_t... Items, typename Input>
 constexpr auto detail::unpack(std::index_sequence<Items...>,
                               Input &&packedInput) {
-    constexpr auto formatMode = struct_cpp::getFormatMode(Fmt{});
+    constexpr auto formatMode = struct_pack::getFormatMode(Fmt{});
 
     constexpr FormatType formats[]
-        = {struct_cpp::getTypeOfItem<Items>(Fmt{})...};
+        = {struct_pack::getTypeOfItem<Items>(Fmt{})...};
 
     using Types = std::tuple<
-        typename struct_cpp::RepresentedType<decltype(formatMode),
-                                             formats[Items].formatChar>...>;
+        typename struct_pack::RepresentedType<decltype(formatMode),
+                                              formats[Items].formatChar>...>;
 
     constexpr size_t offsets[] = {getBinaryOffset<Items>(Fmt{})...};
     auto             unpacked = std::make_tuple(
@@ -52,4 +52,4 @@ constexpr auto detail::unpack(std::index_sequence<Items...>,
     return unpacked;
 }
 
-} // namespace struct_cpp
+} // namespace struct_pack

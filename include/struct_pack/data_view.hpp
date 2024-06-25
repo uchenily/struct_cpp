@@ -7,7 +7,7 @@
 #include <cstring>
 #include <string_view>
 
-namespace struct_cpp {
+namespace struct_pack {
 
 template <typename T>
 struct data_view {
@@ -352,4 +352,4 @@ namespace data {
     }
 
 } // namespace data
-} // namespace struct_cpp
+} // namespace struct_pack

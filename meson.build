@@ -1,4 +1,4 @@
-project('struct_cpp', 'cpp',
+project('struct_pack', 'cpp',
   version: '0.0.1',
   default_options: [
     'buildtype=debug',

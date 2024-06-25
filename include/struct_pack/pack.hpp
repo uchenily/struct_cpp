@@ -1,10 +1,10 @@
 #pragma once
 #include <array>
 
-#include "struct_cpp/calcsize.hpp"
-#include "struct_cpp/data_view.hpp"
+#include "struct_pack/calcsize.hpp"
+#include "struct_pack/data_view.hpp"
 
-namespace struct_cpp {
+namespace struct_pack {
 
 template <typename Fmt, typename... Args>
 constexpr auto pack(Fmt formatString, Args &&...args);
@@ -48,16 +48,16 @@ namespace detail {
         static_assert(
             sizeof...(args) == sizeof...(Items),
             "pack expected items for packing != sizeof...(args) passed");
-        constexpr auto formatMode = struct_cpp::getFormatMode(Fmt{});
+        constexpr auto formatMode = struct_pack::getFormatMode(Fmt{});
 
-        using ArrayType = std::array<char, struct_cpp::calcsize(Fmt{})>;
+        using ArrayType = std::array<char, struct_pack::calcsize(Fmt{})>;
         ArrayType output{};
 
         constexpr FormatType formats[]
-            = {struct_cpp::getTypeOfItem<Items>(Fmt{})...};
-        using Types = std::tuple<
-            typename struct_cpp::RepresentedType<decltype(formatMode),
-                                                 formats[Items].formatChar>...>;
+            = {struct_pack::getTypeOfItem<Items>(Fmt{})...};
+        using Types = std::tuple<typename struct_pack::RepresentedType<
+            decltype(formatMode),
+            formats[Items].formatChar>...>;
 
         // Convert args to a tuple of the represented types
         Types t = std::make_tuple(convert<std::tuple_element_t<Items, Types>>(
@@ -82,4 +82,4 @@ constexpr auto pack(Fmt /*unused*/, Args &&...args) {
                              std::forward<Args>(args)...);
 }
 
-} // namespace struct_cpp
+} // namespace struct_pack

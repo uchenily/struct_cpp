@@ -1,4 +1,4 @@
-#include "struct.hpp"
+#include "struct_pack.hpp"
 
 auto main() -> int {
     static_assert(std::same_as<decltype("123"_fmt), decltype("123"_fmt)>);

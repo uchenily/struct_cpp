@@ -2,7 +2,7 @@
 #include <iterator>
 #include <utility>
 
-namespace struct_cpp::detail {
+namespace struct_pack::detail {
 
 struct format_string {};
 
@@ -22,11 +22,11 @@ constexpr std::pair<size_t, size_t> consumeNumber(const char (&str)[Size],
     return {num, i};
 }
 
-} // namespace struct_cpp::detail
+} // namespace struct_pack::detail
 
 #define PY_STRING(s)                                                           \
     [] {                                                                       \
-        struct S : struct_cpp::detail::format_string {                         \
+        struct S : struct_pack::detail::format_string {                        \
             static constexpr auto value() -> decltype(auto) {                  \
                 return s;                                                      \
             }                                                                  \

@@ -2,9 +2,9 @@
 #include <tuple>
 #include <utility>
 
-#include "struct_cpp/format.hpp"
+#include "struct_pack/format.hpp"
 
-namespace struct_cpp {
+namespace struct_pack {
 
 // Implementation
 template <typename Fmt>
@@ -15,4 +15,4 @@ constexpr auto calcsize(Fmt /*fmt*/) -> std::size_t {
     return getBinaryOffset<numItems - 1>(Fmt{}) + lastItem.size;
 }
 
-} // namespace struct_cpp
+} // namespace struct_pack
