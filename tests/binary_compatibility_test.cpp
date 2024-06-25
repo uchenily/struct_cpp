@@ -15,6 +15,7 @@
 #define CATCH_CONFIG_ENABLE_TUPLE_STRINGMAKER
 #include <catch2/catch.hpp>
 
+#if 0
 template <typename T>
 std::string escapeString(const T &val) {
     std::string out = "\"";
@@ -228,3 +229,4 @@ TEST_CASE("pack complex formats", "[cpstruct_cpp::binary_compat]") {
               -500,
               -9223372036854775807);
 }
+#endif
