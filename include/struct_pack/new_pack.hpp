@@ -328,11 +328,12 @@ namespace detail {
         }
 
         template <size_t... Items, typename... Args>
-        static auto pack_helper(std::index_sequence<Items...> /*unused*/,
-                                Args... args) {
+        static auto pack(std::index_sequence<Items...> /*unused*/,
+                         Args... args) {
             constexpr auto mode = format_mode();
             using ArrayType = std::array<char, calcsize()>;
-            ArrayType            output{};
+
+            auto                 output = ArrayType{};
             constexpr FormatType formats[] = {getTypeOfItem<Items>()...};
             using Types = std::tuple<
                 RepresentedType<decltype(mode), formats[Items].formatChar>...>;
@@ -342,12 +343,11 @@ namespace detail {
                 = std::make_tuple(convert<std::tuple_element_t<Items, Types>>(
                     std::forward<Args>(args))...);
             constexpr size_t offsets[] = {getBinaryOffset<Items>()...};
-            int              _[] = {0,
-                                    packElement(output.data() + offsets[Items],
-                                   mode.is_big_endian(),
-                                   formats[Items],
-                                   std::get<Items>(t))...};
-            (void) _; // _ is a dummy for pack expansion
+            int              _ = {packElement(output.data() + offsets[Items],
+                                 mode.is_big_endian(),
+                                 formats[Items],
+                                 std::get<Items>(t))...};
+            // (void) _; // _ is a dummy for pack expansion
             return output;
         }
     };
@@ -363,7 +363,7 @@ auto new_pack(Args... args) {
     constexpr auto format_mode = Fmt::format_mode();
     PRINT("format mode: {}", format_mode.format());
 
-    return Fmt::template pack_helper(std::make_index_sequence<N>{},
-                                     std::forward<Args>(args)...);
+    return Fmt::pack(std::make_index_sequence<N>{},
+                     std::forward<Args>(args)...);
 }
 } // namespace struct_pack
