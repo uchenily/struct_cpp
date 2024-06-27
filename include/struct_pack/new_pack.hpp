@@ -61,7 +61,7 @@ namespace detail {
         static constexpr auto size() -> std::size_t {                          \
             return s;                                                          \
         }                                                                      \
-        static constexpr auto nativeSize() -> std::size_t {                    \
+        static constexpr auto native_size() -> std::size_t {                   \
             return sizeof(native_rep_type);                                    \
         }                                                                      \
         using RepresentedType = rep_type;                                      \
@@ -146,16 +146,12 @@ namespace detail {
             return item_count;
         }
 
-        static constexpr auto is_format_char(char formatChar) -> bool {
-            return is_format_mode(formatChar) || formatChar == 'x'
-                   || formatChar == 'b' || formatChar == 'B'
-                   || formatChar == 'c' || formatChar == 's'
-                   || formatChar == 'h' || formatChar == 'H'
-                   || formatChar == 'i' || formatChar == 'I'
-                   || formatChar == 'l' || formatChar == 'L'
-                   || formatChar == 'q' || formatChar == 'Q'
-                   || formatChar == 'f' || formatChar == 'd'
-                   || formatChar == '?' || is_digit(formatChar);
+        static constexpr auto is_format_char(char ch) -> bool {
+            return is_format_mode(ch) || ch == 'x' || ch == 'b' || ch == 'B'
+                   || ch == 'c' || ch == 's' || ch == 'h' || ch == 'H'
+                   || ch == 'i' || ch == 'I' || ch == 'l' || ch == 'L'
+                   || ch == 'q' || ch == 'Q' || ch == 'f' || ch == 'd'
+                   || ch == '?' || is_digit(ch);
         }
 
         static constexpr auto format_mode() {
@@ -168,52 +164,50 @@ namespace detail {
         }
 
         struct RawFormatType {
-            char           formatChar;
+            char           format_char;
             size_t         repeat;
-            constexpr auto isString() -> bool {
-                return formatChar == 's';
+            constexpr auto is_string() const -> bool {
+                return format_char == 's';
             }
         };
 
         struct FormatType {
-            char           formatChar;
-            size_t         formatSize;
+            char           format_char;
+            size_t         format_size;
             size_t         size;
-            constexpr auto isString() -> bool {
-                return formatChar == 's';
+            constexpr auto is_string() const -> bool {
+                return format_char == 's';
+            }
+
+            constexpr auto need_align() const -> bool {
+                return format_size > 1;
             }
         };
-
-        static constexpr auto doesFormatAlign(FormatType format) -> bool {
-            return format.formatSize > 1;
-        }
 
         template <char FormatChar, size_t Repeat = 1>
         static constexpr auto getSize() -> size_t {
             if constexpr (format_mode().is_native()) {
-                return BigEndianFormat<FormatChar>::nativeSize() * Repeat;
+                return BigEndianFormat<FormatChar>::native_size() * Repeat;
             } else {
                 return BigEndianFormat<FormatChar>::size() * Repeat;
             }
         }
 
-        template <size_t Item, size_t ArrSize>
-        static constexpr auto
-        getUnwrappedItem(RawFormatType (&wrappedFormats)[ArrSize])
+        template <size_t Item, size_t N>
+        static constexpr auto unwrapped_item(RawFormatType (&formats)[N])
             -> RawFormatType {
-            size_t currentItem = 0;
-            for (size_t i = 0; i < ArrSize; i++) {
-                for (size_t repeat = 0; repeat < wrappedFormats[i].repeat;
-                     repeat++) {
-                    auto currentType = wrappedFormats[i];
-                    if (currentItem == Item) {
-                        if (!currentType.isString()) {
-                            currentType.repeat = 1;
+            size_t current_item = 0;
+            for (size_t i = 0; i < N; i++) {
+                for (size_t repeat = 0; repeat < formats[i].repeat; repeat++) {
+                    auto current_type = formats[i];
+                    if (current_item == Item) {
+                        if (!current_type.is_string()) {
+                            current_type.repeat = 1;
                         }
-                        return currentType;
+                        return current_type;
                     }
-                    currentItem++;
-                    if (currentType.isString()) {
+                    current_item++;
+                    if (current_type.is_string()) {
                         break;
                     }
                 }
@@ -222,39 +216,39 @@ namespace detail {
             return {0, 0};
         }
 
-        template <size_t Item, size_t... Is>
+        template <size_t Index, size_t... Items>
         static constexpr auto
-        getTypeOfItem_helper(std::index_sequence<Is...> /*unused*/)
+        type_of_item_helper(std::index_sequence<Items...> /*unused*/)
             -> RawFormatType {
-            constexpr auto fomratString = std::array{at(Is)...};
-            RawFormatType  wrappedTypes[count_items()]{};
-            size_t         currentType = 0;
-            for (size_t i = 0; i < sizeof...(Is); i++) {
-                if (is_format_mode(fomratString[i])) {
+            constexpr auto format_string = std::array{at(Items)...};
+            RawFormatType  wrapped_types[count_items()]{};
+            size_t         current_type = 0;
+            for (size_t i = 0; i < sizeof...(Items); i++) {
+                if (is_format_mode(format_string[i])) {
                     continue;
                 }
-                auto repeatCount = consume_number(i);
-                i = repeatCount.second;
-                wrappedTypes[currentType].formatChar = fomratString[i];
-                wrappedTypes[currentType].repeat = repeatCount.first;
-                if (repeatCount.first == 0) {
-                    wrappedTypes[currentType].repeat = 1;
+                auto repeat_count = consume_number(i);
+                i = repeat_count.second;
+                wrapped_types[current_type].format_char = format_string[i];
+                wrapped_types[current_type].repeat = repeat_count.first;
+                if (repeat_count.first == 0) {
+                    wrapped_types[current_type].repeat = 1;
                 }
-                currentType++;
+                current_type++;
             }
-            return getUnwrappedItem<Item>(wrappedTypes);
+            return unwrapped_item<Index>(wrapped_types);
         }
 
-        template <size_t Item>
+        template <size_t Index>
         static constexpr auto type_of_item() -> FormatType {
-            static_assert(Item < count_items(),
+            static_assert(Index < count_items(),
                           "Item requested must be inside the format");
-            constexpr RawFormatType format = getTypeOfItem_helper<Item>(
+            constexpr RawFormatType format = type_of_item_helper<Index>(
                 std::make_index_sequence<size()>());
             constexpr FormatType sizedFormat
-                = {format.formatChar,
-                   getSize<format.formatChar>(),
-                   getSize<format.formatChar, format.repeat>()};
+                = {format.format_char,
+                   getSize<format.format_char>(),
+                   getSize<format.format_char, format.repeat>()};
             return sizedFormat;
         }
 
@@ -262,27 +256,27 @@ namespace detail {
         static constexpr auto
         binary_offset_helper(std::index_sequence<Items...> /*unused*/)
             -> size_t {
-            constexpr auto itemTypes = std::array{type_of_item<Items>()...};
-            constexpr auto formatMode = format_mode();
+            constexpr auto item_types = std::array{type_of_item<Items>()...};
+            constexpr auto mode = format_mode();
             size_t         size = 0;
             for (size_t i = 0; i < sizeof...(Items) - 1; i++) {
-                size += itemTypes[i].size;
-                if (formatMode.should_pad()) {
-                    if (doesFormatAlign(itemTypes[i + 1])) {
-                        auto currentAlignment
-                            = (size % itemTypes[i + 1].formatSize);
-                        if (currentAlignment != 0) {
-                            size += itemTypes[i + 1].formatSize
-                                    - currentAlignment;
+                size += item_types[i].size;
+                if (mode.should_pad()) {
+                    if (item_types[i + 1].need_align()) {
+                        auto current_alignment
+                            = (size % item_types[i + 1].format_size);
+                        if (current_alignment != 0) {
+                            size += item_types[i + 1].format_size
+                                    - current_alignment;
                         }
                     }
                 }
             }
             return size;
         }
-        template <size_t Item>
+        template <size_t Index>
         static constexpr auto binary_offset() -> size_t {
-            return binary_offset_helper(std::make_index_sequence<Item + 1>());
+            return binary_offset_helper(std::make_index_sequence<Index + 1>());
         }
 
         // https://docs.python.org/3/library/struct.html#struct.calcsize
@@ -297,7 +291,7 @@ namespace detail {
 
         template <typename RepType>
         static constexpr auto pack_element(char      *data,
-                                           bool       bigEndian,
+                                           bool       big_endian,
                                            FormatType format,
                                            RepType    elem) {
             if constexpr (std::is_same_v<RepType, std::string_view>) {
@@ -309,7 +303,7 @@ namespace detail {
                 (void)
                     format; // Unreferenced if constexpr RepType != string_view
             }
-            data_view<char> view(data, bigEndian);
+            data_view<char> view(data, big_endian);
             data::store(view, elem);
         }
 
@@ -339,7 +333,7 @@ namespace detail {
             auto           output = ArrayType{};
             constexpr auto formats = std::array{type_of_item<Items>()...};
             using Types = std::tuple<
-                RepresentedType<decltype(mode), formats[Items].formatChar>...>;
+                RepresentedType<decltype(mode), formats[Items].format_char>...>;
 
             // Convert args to a tuple of the represented types
             Types types
