@@ -333,6 +333,8 @@ namespace detail {
         static auto pack(std::index_sequence<Items...> /*unused*/,
                          Args &&...args) {
             constexpr auto mode = format_mode();
+            PRINT("format mode: {}", mode.format());
+
             using ArrayType = std::array<char, calcsize()>;
 
             auto                 output = ArrayType{};
@@ -341,14 +343,14 @@ namespace detail {
                 RepresentedType<decltype(mode), formats[Items].formatChar>...>;
 
             // Convert args to a tuple of the represented types
-            Types t
+            Types types
                 = std::make_tuple(convert<std::tuple_element_t<Items, Types>>(
                     std::forward<Args>(args))...);
             constexpr size_t offsets[] = {binary_offset<Items>()...};
             int              _[] = {pack_element(output.data() + offsets[Items],
                                     mode.is_big_endian(),
                                     formats[Items],
-                                    std::get<Items>(t))...};
+                                    std::get<Items>(types))...};
             (void) _;
             return output;
         }
@@ -361,9 +363,6 @@ auto new_pack(Args &&...args) {
     using Fmt = detail::fmt_string<container>;
     constexpr size_t N = Fmt::count_items();
     static_assert(N == sizeof...(args), "Parameter number does not match");
-
-    constexpr auto format_mode = Fmt::format_mode();
-    PRINT("format mode: {}", format_mode.format());
 
     return Fmt::pack(std::make_index_sequence<N>{},
                      std::forward<Args>(args)...);
