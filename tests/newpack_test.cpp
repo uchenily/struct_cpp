@@ -15,7 +15,10 @@ auto test_single_format() {
     // I: unsigned int       (4bytes)
     // L: unsigned long      (4bytes)
     // Q: unsigned long long (8bytes)
-    // \xfe\xff\xfe\xff\xff\xff\xfe\xff\xff\xff\xfe\xff\xff\xff\xff\xff\xff\xff\xfe
+    // >>> import struct
+    // >>> struct.pack(">BHILQ", 254, 65534, 4294967294, 4294967294,
+    // 18446744073709551614)
+    // b'\xfe\xff\xfe\xff\xff\xff\xfe\xff\xff\xff\xfe\xff\xff\xff\xff\xff\xff\xff\xfe'
     auto packed2 = struct_pack::new_pack<">BHILQ">(254,
                                                    65534,
                                                    4294967294UL,
@@ -67,6 +70,9 @@ auto test_single_format() {
 
 auto test_repeat_format() {
     // xyzwt\x34\x12\x78\x56
+    // >>> import struct
+    // >>> struct.pack("<2c3s2H", b'x', b'y', b"zwt  __", 0x1234, 0x5678)
+    // b'xyzwt4\x12xV'
     auto packed
         = struct_pack::new_pack<"<2c3s2H">('x', 'y', "zwt  __", 0x1234, 0x5678);
     ASSERT(packed[0] == 'x');
