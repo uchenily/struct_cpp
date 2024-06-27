@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string_view>
 #include <type_traits>
 
 namespace struct_pack::detail {
@@ -86,6 +87,23 @@ SET_FORMAT_CHAR('x', 1, char, char);
 SET_FORMAT_CHAR('b', 1, int8_t, signed char);
 SET_FORMAT_CHAR('B', 1, uint8_t, unsigned char);
 SET_FORMAT_CHAR('c', 1, char, char);
+
+// string
+SET_FORMAT_CHAR('s', 1, std::string_view, std::string_view);
+
+// Pascal strings are not supported ideologically
+// SET_FORMAT_CHAR('p', 1, ?);
+
+SET_FORMAT_CHAR('h', 2, int16_t, short);
+SET_FORMAT_CHAR('H', 2, uint16_t, unsigned short);
+SET_FORMAT_CHAR('i', 4, int32_t, int);
+SET_FORMAT_CHAR('I', 4, uint32_t, unsigned int);
+SET_FORMAT_CHAR('l', 4, int32_t, long);
+SET_FORMAT_CHAR('L', 4, uint32_t, unsigned long);
+SET_FORMAT_CHAR('q', 8, int64_t, long long);
+SET_FORMAT_CHAR('Q', 8, uint64_t, unsigned long long);
+SET_FORMAT_CHAR('f', 4, float, float);
+SET_FORMAT_CHAR('d', 8, double, double);
 #undef SET_FORMAT_CHAR
 
 template <typename FormatMode, char FormatChar>
