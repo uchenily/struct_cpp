@@ -6,6 +6,7 @@
 #include "struct_pack/data_view.hpp"
 #include "struct_pack/debug.hpp"
 #include "struct_pack/new_format.hpp"
+#include "struct_pack/print.hpp"
 
 namespace struct_pack::detail {
 template <auto container>
@@ -206,15 +207,17 @@ struct fmt_string {
             // format
             elem = std::string_view{elem.data(),
                                     std::min(elem.size(), format.size)};
-        } else {
-            (void) format; // Unreferenced if constexpr RepType != string_view
+            // } else {
+            //     (void) format; // Unreferenced if constexpr RepType !=
+            //     string_view
         }
         auto view = data_view<char>{data, big_endian};
+        PRINT("pack store: {} <- {}", (void *) data, elem);
         data::store(view, elem);
     }
 
     template <typename RepType, typename T>
-    static constexpr auto convert(const T &val) -> RepType {
+    static constexpr auto convert_to(const T &val) -> RepType {
         // If T is char[], and RepType is string_view - construct directly
         // with std::size(val)
         //  because std::string_view doesn't have a constructor taking a
@@ -242,9 +245,10 @@ struct fmt_string {
 
         // Convert args to a tuple of the represented types
         Types types
-            = std::make_tuple(convert<std::tuple_element_t<Items, Types>>(
+            = std::make_tuple(convert_to<std::tuple_element_t<Items, Types>>(
                 std::forward<Args>(args))...);
         constexpr auto offsets = std::array{binary_offset<Items>()...};
+        PRINT("offset: {}", print_hpp::P(offsets));
 
         auto output = std::array<char, num_bytes>{};
         (pack_element(output.data() + offsets[Items],
