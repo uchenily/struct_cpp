@@ -226,7 +226,7 @@ namespace detail {
         static constexpr auto
         getTypeOfItem_helper(std::index_sequence<Is...> /*unused*/)
             -> RawFormatType {
-            constexpr char fomratString[] = {at(Is)...};
+            constexpr auto fomratString = std::array{at(Is)...};
             RawFormatType  wrappedTypes[count_items()]{};
             size_t         currentType = 0;
             for (size_t i = 0; i < sizeof...(Is); i++) {
@@ -262,9 +262,9 @@ namespace detail {
         static constexpr auto
         binary_offset_helper(std::index_sequence<Items...> /*unused*/)
             -> size_t {
-            constexpr FormatType itemTypes[] = {type_of_item<Items>()...};
-            constexpr auto       formatMode = format_mode();
-            size_t               size = 0;
+            constexpr auto itemTypes = std::array{type_of_item<Items>()...};
+            constexpr auto formatMode = format_mode();
+            size_t         size = 0;
             for (size_t i = 0; i < sizeof...(Items) - 1; i++) {
                 size += itemTypes[i].size;
                 if (formatMode.should_pad()) {
@@ -336,8 +336,8 @@ namespace detail {
 
             using ArrayType = std::array<char, calcsize()>;
 
-            auto                 output = ArrayType{};
-            constexpr FormatType formats[] = {type_of_item<Items>()...};
+            auto           output = ArrayType{};
+            constexpr auto formats = std::array{type_of_item<Items>()...};
             using Types = std::tuple<
                 RepresentedType<decltype(mode), formats[Items].formatChar>...>;
 
@@ -345,7 +345,7 @@ namespace detail {
             Types types
                 = std::make_tuple(convert<std::tuple_element_t<Items, Types>>(
                     std::forward<Args>(args))...);
-            constexpr size_t offsets[] = {binary_offset<Items>()...};
+            constexpr auto offsets = std::array{binary_offset<Items>()...};
             (pack_element(output.data() + offsets[Items],
                           mode.is_big_endian(),
                           formats[Items],
