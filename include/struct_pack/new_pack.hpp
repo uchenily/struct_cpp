@@ -246,7 +246,7 @@ namespace detail {
         }
 
         template <size_t Item>
-        static constexpr auto getTypeOfItem() -> FormatType {
+        static constexpr auto type_of_item() -> FormatType {
             static_assert(Item < count_items(),
                           "Item requested must be inside the format");
             constexpr RawFormatType format = getTypeOfItem_helper<Item>(
@@ -260,8 +260,9 @@ namespace detail {
 
         template <size_t... Items>
         static constexpr auto
-        getBinaryOffset(std::index_sequence<Items...> /*unused*/) -> size_t {
-            constexpr FormatType itemTypes[] = {getTypeOfItem<Items>()...};
+        binary_offset_helper(std::index_sequence<Items...> /*unused*/)
+            -> size_t {
+            constexpr FormatType itemTypes[] = {type_of_item<Items>()...};
             constexpr auto       formatMode = format_mode();
             size_t               size = 0;
             for (size_t i = 0; i < sizeof...(Items) - 1; i++) {
@@ -280,8 +281,8 @@ namespace detail {
             return size;
         }
         template <size_t Item>
-        static constexpr auto getBinaryOffset() -> size_t {
-            return getBinaryOffset(std::make_index_sequence<Item + 1>());
+        static constexpr auto binary_offset() -> size_t {
+            return binary_offset_helper(std::make_index_sequence<Item + 1>());
         }
 
         // https://docs.python.org/3/library/struct.html#struct.calcsize
@@ -290,14 +291,15 @@ namespace detail {
             // count_items: 3*4 + 4 * 1 + 10 = 16
             // with padding: 3 * 4 + 4*1 + (4bytes) + 10 = 20
             constexpr auto num_items = count_items();
-            constexpr auto last_item = getTypeOfItem<num_items - 1>();
-            return getBinaryOffset<num_items - 1>() + last_item.size;
+            constexpr auto last_item = type_of_item<num_items - 1>();
+            return binary_offset<num_items - 1>() + last_item.size;
         }
 
         template <typename RepType>
-        static constexpr auto
-        packElement(char *data, bool bigEndian, FormatType format, RepType elem)
-            -> int {
+        static constexpr auto pack_element(char      *data,
+                                           bool       bigEndian,
+                                           FormatType format,
+                                           RepType    elem) -> int {
             if constexpr (std::is_same_v<RepType, std::string_view>) {
                 // Trim the string size to the repeat count specified in the
                 // format
@@ -329,12 +331,12 @@ namespace detail {
 
         template <size_t... Items, typename... Args>
         static auto pack(std::index_sequence<Items...> /*unused*/,
-                         Args... args) {
+                         Args &&...args) {
             constexpr auto mode = format_mode();
             using ArrayType = std::array<char, calcsize()>;
 
             auto                 output = ArrayType{};
-            constexpr FormatType formats[] = {getTypeOfItem<Items>()...};
+            constexpr FormatType formats[] = {type_of_item<Items>()...};
             using Types = std::tuple<
                 RepresentedType<decltype(mode), formats[Items].formatChar>...>;
 
@@ -342,11 +344,11 @@ namespace detail {
             Types t
                 = std::make_tuple(convert<std::tuple_element_t<Items, Types>>(
                     std::forward<Args>(args))...);
-            constexpr size_t offsets[] = {getBinaryOffset<Items>()...};
-            int              _[] = {packElement(output.data() + offsets[Items],
-                                   mode.is_big_endian(),
-                                   formats[Items],
-                                   std::get<Items>(t))...};
+            constexpr size_t offsets[] = {binary_offset<Items>()...};
+            int              _[] = {pack_element(output.data() + offsets[Items],
+                                    mode.is_big_endian(),
+                                    formats[Items],
+                                    std::get<Items>(t))...};
             (void) _;
             return output;
         }
@@ -355,7 +357,7 @@ namespace detail {
 } // namespace detail
 
 template <string_container container, typename... Args>
-auto new_pack(Args... args) {
+auto new_pack(Args &&...args) {
     using Fmt = detail::fmt_string<container>;
     constexpr size_t N = Fmt::count_items();
     static_assert(N == sizeof...(args), "Parameter number does not match");
