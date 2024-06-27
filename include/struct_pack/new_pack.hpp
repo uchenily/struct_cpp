@@ -358,16 +358,12 @@ template <string_container container, typename... Args>
 auto new_pack(Args... args) {
     using Fmt = detail::fmt_string<container>;
     constexpr size_t N = Fmt::count_items();
-    static_assert(N == sizeof...(args));
+    static_assert(N == sizeof...(args), "Parameter number does not match");
 
     constexpr auto format_mode = Fmt::format_mode();
     PRINT("format mode: {}", format_mode.format());
 
-    constexpr auto         size = Fmt::calcsize();
-    std::array<char, size> output{};
-    Fmt::template pack_helper(std::make_index_sequence<N>{},
-                              std::forward<Args>(args)...);
-
-    return output;
+    return Fmt::template pack_helper(std::make_index_sequence<N>{},
+                                     std::forward<Args>(args)...);
 }
 } // namespace struct_pack
