@@ -1,13 +1,15 @@
 #include "struct_pack.hpp"
 #include "struct_pack/debug.hpp"
 
-auto main() -> int {
+auto test_bytes() {
     auto packed = struct_pack::new_pack<"!BB">(0x12, 0x34);
     PRINT("packed[0] = 0x{:02x}", packed[0]);
     PRINT("packed[1] = 0x{:02x}", packed[1]);
     ASSERT(packed[0] == 0x12);
     ASSERT(packed[1] == 0x34);
+}
 
+auto test_single_format() {
     // B: unsigned char      (1byte)
     // H: unsigned short     (2bytes)
     // I: unsigned int       (4bytes)
@@ -61,4 +63,25 @@ auto main() -> int {
     ASSERT(packed2[16] == (char) 0xFF);
     ASSERT(packed2[17] == (char) 0xFF);
     ASSERT(packed2[18] == (char) 0xFE);
+}
+
+auto test_repeat_format() {
+    // xyzwt\x34\x12\x78\x56
+    auto packed
+        = struct_pack::new_pack<"<2c3s2H">('x', 'y', "zwt  __", 0x1234, 0x5678);
+    ASSERT(packed[0] == 'x');
+    ASSERT(packed[1] == 'y');
+    ASSERT(packed[2] == 'z');
+    ASSERT(packed[3] == 'w');
+    ASSERT(packed[4] == 't');
+    ASSERT(packed[5] == 0x34);
+    ASSERT(packed[6] == 0x12);
+    ASSERT(packed[7] == 0x78);
+    ASSERT(packed[8] == 0x56);
+}
+
+auto main() -> int {
+    test_bytes();
+    test_single_format();
+    test_repeat_format();
 }

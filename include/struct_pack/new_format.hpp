@@ -55,6 +55,7 @@ struct new_FormatMode {
         }                                                                      \
     }
 SET_FORMAT_MODE('@', true, false, true);
+SET_FORMAT_MODE('<', false, false, false);
 SET_FORMAT_MODE('>', false, true, false);
 SET_FORMAT_MODE('!', false, true, false);
 #undef SET_FORMAT_MODE
