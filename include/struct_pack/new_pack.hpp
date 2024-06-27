@@ -185,7 +185,7 @@ namespace detail {
         };
 
         template <char FormatChar, size_t Repeat = 1>
-        static constexpr auto getSize() -> size_t {
+        static constexpr auto get_size() -> size_t {
             if constexpr (format_mode().is_native()) {
                 return BigEndianFormat<FormatChar>::native_size() * Repeat;
             } else {
@@ -243,13 +243,13 @@ namespace detail {
         static constexpr auto type_of_item() -> FormatType {
             static_assert(Index < count_items(),
                           "Item requested must be inside the format");
-            constexpr RawFormatType format = type_of_item_helper<Index>(
-                std::make_index_sequence<size()>());
-            constexpr FormatType sizedFormat
-                = {format.format_char,
-                   getSize<format.format_char>(),
-                   getSize<format.format_char, format.repeat>()};
-            return sizedFormat;
+            constexpr auto format = RawFormatType{
+                type_of_item_helper<Index>(std::make_index_sequence<size()>())};
+            constexpr auto type
+                = FormatType{format.format_char,
+                             get_size<format.format_char>(),
+                             get_size<format.format_char, format.repeat>()};
+            return type;
         }
 
         template <size_t... Items>
@@ -297,13 +297,13 @@ namespace detail {
             if constexpr (std::is_same_v<RepType, std::string_view>) {
                 // Trim the string size to the repeat count specified in the
                 // format
-                elem = std::string_view(elem.data(),
-                                        std::min(elem.size(), format.size));
+                elem = std::string_view{elem.data(),
+                                        std::min(elem.size(), format.size)};
             } else {
                 (void)
                     format; // Unreferenced if constexpr RepType != string_view
             }
-            data_view<char> view(data, big_endian);
+            auto view = data_view<char>{data, big_endian};
             data::store(view, elem);
         }
 
@@ -328,9 +328,9 @@ namespace detail {
             constexpr auto mode = format_mode();
             PRINT("format mode: {}", mode.format());
 
-            using ArrayType = std::array<char, calcsize()>;
+            constexpr auto num_bytes = calcsize();
+            PRINT("calcsize: {}", num_bytes);
 
-            auto           output = ArrayType{};
             constexpr auto formats = std::array{type_of_item<Items>()...};
             using Types = std::tuple<
                 RepresentedType<decltype(mode), formats[Items].format_char>...>;
@@ -340,6 +340,8 @@ namespace detail {
                 = std::make_tuple(convert<std::tuple_element_t<Items, Types>>(
                     std::forward<Args>(args))...);
             constexpr auto offsets = std::array{binary_offset<Items>()...};
+
+            auto output = std::array<char, num_bytes>{};
             (pack_element(output.data() + offsets[Items],
                           mode.is_big_endian(),
                           formats[Items],
