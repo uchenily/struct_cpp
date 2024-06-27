@@ -299,7 +299,7 @@ namespace detail {
         static constexpr auto pack_element(char      *data,
                                            bool       bigEndian,
                                            FormatType format,
-                                           RepType    elem) -> int {
+                                           RepType    elem) {
             if constexpr (std::is_same_v<RepType, std::string_view>) {
                 // Trim the string size to the repeat count specified in the
                 // format
@@ -311,7 +311,6 @@ namespace detail {
             }
             data_view<char> view(data, bigEndian);
             data::store(view, elem);
-            return 0;
         }
 
         template <typename RepType, typename T>
@@ -347,11 +346,11 @@ namespace detail {
                 = std::make_tuple(convert<std::tuple_element_t<Items, Types>>(
                     std::forward<Args>(args))...);
             constexpr size_t offsets[] = {binary_offset<Items>()...};
-            int              _[] = {pack_element(output.data() + offsets[Items],
-                                    mode.is_big_endian(),
-                                    formats[Items],
-                                    std::get<Items>(types))...};
-            (void) _;
+            (pack_element(output.data() + offsets[Items],
+                          mode.is_big_endian(),
+                          formats[Items],
+                          std::get<Items>(types)),
+             ...);
             return output;
         }
     };
