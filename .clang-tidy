@@ -12,12 +12,14 @@ Checks: |
   llvm-*,
   -bugprone-easily-swappable-parameters,
   -bugprone-unhandled-exception-at-new,
+  -cppcoreguidelines-avoid-c-arrays,
   -cppcoreguidelines-avoid-do-while
   -cppcoreguidelines-avoid-magic-numbers,
   -cppcoreguidelines-avoid-reference-coroutine-parameters,
   -cppcoreguidelines-special-member-functions,
   -cppcoreguidelines-avoid-non-const-global-variables,
   -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
   -cppcoreguidelines-pro-type-reinterpret-cast,
   -cppcoreguidelines-pro-type-vararg,
   -cppcoreguidelines-non-private-member-variables-in-classes,
@@ -35,6 +37,7 @@ Checks: |
   -readability-else-after-return,
   -misc-non-private-member-variables-in-classes,
   -modernize-use-nodiscard,
+  -modernize-avoid-c-arrays,
 WarningsAsErrors: '*'
 AnalyzeTemporaryDtors: false
 CheckOptions:

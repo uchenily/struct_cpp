@@ -1,6 +1,9 @@
+#include "struct_pack/data_view.hpp"
 #include "struct_pack/debug.hpp"
+#include "struct_pack/format.hpp"
 #include "struct_pack/string_literal.hpp"
 #include <tuple>
+#include <utility>
 
 namespace struct_pack {
 namespace detail {
@@ -46,34 +49,37 @@ namespace detail {
     template <char FormatChar>
     struct BigEndianFormat {
         static_assert(isFormatChar(FormatChar), "Invalid Format Char passed");
-        static constexpr size_t size() {
+        static constexpr auto size() -> size_t {
             return 0;
         }
     };
-#undef BigEndianFormat
+
+#undef SET_FORMAT_CHAR
 #define SET_FORMAT_CHAR(ch, s, rep_type, native_rep_type)                      \
     template <>                                                                \
     struct BigEndianFormat<ch> {                                               \
-        static constexpr size_t size() {                                       \
+        static constexpr auto size() -> std::size_t {                          \
             return s;                                                          \
         }                                                                      \
-        static constexpr size_t nativeSize() {                                 \
+        static constexpr auto nativeSize() -> std::size_t {                    \
             return sizeof(native_rep_type);                                    \
         }                                                                      \
         using RepresentedType = rep_type;                                      \
         using NativeRepresentedType = native_rep_type;                         \
-    }
-    template <typename Fmt, char FormatChar>
-    using RepresentedType = std::conditional_t<
-        Fmt::isNative(),
-        typename BigEndianFormat<FormatChar>::NativeRepresentedType,
-        typename BigEndianFormat<FormatChar>::RepresentedType>;
+    };
+
     SET_FORMAT_CHAR('?', 1, bool, bool);
     SET_FORMAT_CHAR('x', 1, char, char);
     SET_FORMAT_CHAR('b', 1, int8_t, signed char);
     SET_FORMAT_CHAR('B', 1, uint8_t, unsigned char);
     SET_FORMAT_CHAR('c', 1, char, char);
 #undef SET_FORMAT_CHAR
+
+    template <typename FormatMode, char FormatChar>
+    using RepresentedType = std::conditional_t<
+        FormatMode::is_native(),
+        typename BigEndianFormat<FormatChar>::NativeRepresentedType,
+        typename BigEndianFormat<FormatChar>::RepresentedType>;
 
     template <auto container>
     struct fmt_string {
@@ -111,7 +117,7 @@ namespace detail {
                 num = static_cast<size_t>(num * 10 + (at(i) - '0'));
             }
 
-            return {num, i - 1};
+            return {num, i};
         }
 
         static constexpr auto count_items() -> size_t {
@@ -125,6 +131,7 @@ namespace detail {
 
                 if (is_digit(current)) {
                     std::tie(num, i) = consume_number(i);
+                    i--; // to combat the i++ in the loop
                     continue;
                 }
 
@@ -151,7 +158,7 @@ namespace detail {
                    || formatChar == '?' || is_digit(formatChar);
         }
 
-        constexpr auto format_mode() {
+        static constexpr auto format_mode() {
             if constexpr (is_format_mode(at(0))) {
                 constexpr auto first_char = at(0);
                 return new_FormatMode<first_char>{};
@@ -167,6 +174,7 @@ namespace detail {
                 return formatChar == 's';
             }
         };
+
         struct FormatType {
             char           formatChar;
             size_t         formatSize;
@@ -175,11 +183,13 @@ namespace detail {
                 return formatChar == 's';
             }
         };
-        constexpr auto doesFormatAlign(FormatType format) -> bool {
+
+        static constexpr auto doesFormatAlign(FormatType format) -> bool {
             return format.formatSize > 1;
         }
-        template <typename Fmt, char FormatChar, size_t Repeat = 1>
-        constexpr auto getSize() -> size_t {
+
+        template <char FormatChar, size_t Repeat = 1>
+        static constexpr auto getSize() -> size_t {
             if constexpr (format_mode().is_native()) {
                 return BigEndianFormat<FormatChar>::nativeSize() * Repeat;
             } else {
@@ -187,17 +197,43 @@ namespace detail {
             }
         }
 
-        template <size_t Item, typename Fmt, size_t... Is>
-        constexpr auto getTypeOfItem(std::index_sequence<Is...> /*unused*/)
+        template <size_t Item, size_t ArrSize>
+        static constexpr auto
+        getUnwrappedItem(RawFormatType (&wrappedFormats)[ArrSize])
             -> RawFormatType {
-            constexpr char fomratString[] = {Fmt::at(Is)...};
-            RawFormatType  wrappedTypes[countItems(Fmt{})]{};
+            size_t currentItem = 0;
+            for (size_t i = 0; i < ArrSize; i++) {
+                for (size_t repeat = 0; repeat < wrappedFormats[i].repeat;
+                     repeat++) {
+                    auto currentType = wrappedFormats[i];
+                    if (currentItem == Item) {
+                        if (!currentType.isString()) {
+                            currentType.repeat = 1;
+                        }
+                        return currentType;
+                    }
+                    currentItem++;
+                    if (currentType.isString()) {
+                        break;
+                    }
+                }
+            }
+            // cannot get here, Item < ArrSize
+            return {0, 0};
+        }
+
+        template <size_t Item, size_t... Is>
+        static constexpr auto
+        getTypeOfItem_helper(std::index_sequence<Is...> /*unused*/)
+            -> RawFormatType {
+            constexpr char fomratString[] = {at(Is)...};
+            RawFormatType  wrappedTypes[count_items()]{};
             size_t         currentType = 0;
             for (size_t i = 0; i < sizeof...(Is); i++) {
                 if (is_format_mode(fomratString[i])) {
                     continue;
                 }
-                auto repeatCount = consume_number(fomratString, i);
+                auto repeatCount = consume_number(i);
                 i = repeatCount.second;
                 wrappedTypes[currentType].formatChar = fomratString[i];
                 wrappedTypes[currentType].repeat = repeatCount.first;
@@ -209,28 +245,28 @@ namespace detail {
             return getUnwrappedItem<Item>(wrappedTypes);
         }
 
-        template <size_t Item, typename Fmt>
-        constexpr auto getTypeOfItem() -> FormatType {
+        template <size_t Item>
+        static constexpr auto getTypeOfItem() -> FormatType {
             static_assert(Item < count_items(),
                           "Item requested must be inside the format");
-            constexpr RawFormatType format = getTypeOfItem<Item, Fmt>(
-                std::make_index_sequence<Fmt::size()>());
-            constexpr FormatType type
+            constexpr RawFormatType format = getTypeOfItem_helper<Item>(
+                std::make_index_sequence<size()>());
+            constexpr FormatType sizedFormat
                 = {format.formatChar,
-                   getSize<Fmt, format.formatChar>(),
-                   getSize<Fmt, format.formatChar, format.repeat>()};
-            return type;
+                   getSize<format.formatChar>(),
+                   getSize<format.formatChar, format.repeat>()};
+            return sizedFormat;
         }
 
-        template <typename Fmt, size_t... Items>
-        constexpr auto getBinaryOffset(std::index_sequence<Items...> /*unused*/)
-            -> size_t {
-            constexpr FormatType itemTypes[] = {getTypeOfItem<Items>(Fmt{})...};
+        template <size_t... Items>
+        static constexpr auto
+        getBinaryOffset(std::index_sequence<Items...> /*unused*/) -> size_t {
+            constexpr FormatType itemTypes[] = {getTypeOfItem<Items>()...};
             constexpr auto       formatMode = format_mode();
             size_t               size = 0;
             for (size_t i = 0; i < sizeof...(Items) - 1; i++) {
                 size += itemTypes[i].size;
-                if (formatMode.shouldPad()) {
+                if (formatMode.should_pad()) {
                     if (doesFormatAlign(itemTypes[i + 1])) {
                         auto currentAlignment
                             = (size % itemTypes[i + 1].formatSize);
@@ -243,44 +279,95 @@ namespace detail {
             }
             return size;
         }
-
-        template <size_t Item, typename Fmt>
-        constexpr auto getBinaryOffset() -> size_t {
+        template <size_t Item>
+        static constexpr auto getBinaryOffset() -> size_t {
             return getBinaryOffset(std::make_index_sequence<Item + 1>());
         }
 
         // https://docs.python.org/3/library/struct.html#struct.calcsize
-        constexpr auto calcsize() -> std::size_t {
+        static constexpr auto calcsize() -> std::size_t {
             // 3H4B10s:
-            // count_items: 3*4 + 4 * 1 + 10
+            // count_items: 3*4 + 4 * 1 + 10 = 16
+            // with padding: 3 * 4 + 4*1 + (4bytes) + 10 = 20
             constexpr auto num_items = count_items();
             constexpr auto last_item = getTypeOfItem<num_items - 1>();
             return getBinaryOffset<num_items - 1>() + last_item.size;
         }
+
+        template <typename RepType>
+        static constexpr auto
+        packElement(char *data, bool bigEndian, FormatType format, RepType elem)
+            -> int {
+            if constexpr (std::is_same_v<RepType, std::string_view>) {
+                // Trim the string size to the repeat count specified in the
+                // format
+                elem = std::string_view(elem.data(),
+                                        std::min(elem.size(), format.size));
+            } else {
+                (void)
+                    format; // Unreferenced if constexpr RepType != string_view
+            }
+            data_view<char> view(data, bigEndian);
+            data::store(view, elem);
+            return 0;
+        }
+
+        template <typename RepType, typename T>
+        static constexpr auto convert(const T &val) -> RepType {
+            // If T is char[], and RepType is string_view - construct directly
+            // with std::size(val)
+            //  because std::string_view doesn't have a constructor taking a
+            //  char(&)[]
+            if constexpr (std::is_array_v<T>
+                          && std::is_same_v<std::remove_extent_t<T>, char>
+                          && std::is_same_v<RepType, std::string_view>) {
+                return RepType(std::data(val), std::size(val));
+            } else {
+                return static_cast<RepType>(val);
+            }
+        }
+
+        template <size_t... Items, typename... Args>
+        static auto pack_helper(std::index_sequence<Items...> /*unused*/,
+                                Args... args) {
+            constexpr auto mode = format_mode();
+            using ArrayType = std::array<char, calcsize()>;
+            ArrayType            output{};
+            constexpr FormatType formats[] = {getTypeOfItem<Items>()...};
+            using Types = std::tuple<
+                RepresentedType<decltype(mode), formats[Items].formatChar>...>;
+
+            // Convert args to a tuple of the represented types
+            Types t
+                = std::make_tuple(convert<std::tuple_element_t<Items, Types>>(
+                    std::forward<Args>(args))...);
+            constexpr size_t offsets[] = {getBinaryOffset<Items>()...};
+            int              _[] = {0,
+                                    packElement(output.data() + offsets[Items],
+                                   mode.is_big_endian(),
+                                   formats[Items],
+                                   std::get<Items>(t))...};
+            (void) _; // _ is a dummy for pack expansion
+            return output;
+        }
     };
 
-    template <string_container container,
-              std::size_t      I,
-              std::size_t      N,
-              typename... Args>
-    auto pack_helper(Args... args) {
-        if constexpr (I < N) {
-            pack_helper<container, I + 1, N>(std::forward<Args>(args)...);
-        }
-    }
 } // namespace detail
 
 template <string_container container, typename... Args>
 auto new_pack(Args... args) {
-    auto fmt = detail::fmt_string<container>{};
-
-    constexpr size_t N = fmt.count_items();
+    using Fmt = detail::fmt_string<container>;
+    constexpr size_t N = Fmt::count_items();
     static_assert(N == sizeof...(args));
 
-    constexpr auto format_mode = fmt.format_mode();
+    constexpr auto format_mode = Fmt::format_mode();
     PRINT("format mode: {}", format_mode.format());
-    detail::pack_helper<container, 0, N>(std::forward<Args>(args)...);
 
-    return fmt;
+    constexpr auto         size = Fmt::calcsize();
+    std::array<char, size> output{};
+    Fmt::template pack_helper(std::make_index_sequence<N>{},
+                              std::forward<Args>(args)...);
+
+    return output;
 }
 } // namespace struct_pack
