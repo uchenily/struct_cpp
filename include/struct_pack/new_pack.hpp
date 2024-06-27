@@ -343,11 +343,11 @@ namespace detail {
                 = std::make_tuple(convert<std::tuple_element_t<Items, Types>>(
                     std::forward<Args>(args))...);
             constexpr size_t offsets[] = {getBinaryOffset<Items>()...};
-            int              _ = {packElement(output.data() + offsets[Items],
-                                 mode.is_big_endian(),
-                                 formats[Items],
-                                 std::get<Items>(t))...};
-            // (void) _; // _ is a dummy for pack expansion
+            int              _[] = {packElement(output.data() + offsets[Items],
+                                   mode.is_big_endian(),
+                                   formats[Items],
+                                   std::get<Items>(t))...};
+            (void) _;
             return output;
         }
     };

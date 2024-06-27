@@ -14,7 +14,7 @@ struct string_container {
         return N - 1;
     }
 
-    char data[N];
+    char data[N]{};
 };
 
 template <auto container>
